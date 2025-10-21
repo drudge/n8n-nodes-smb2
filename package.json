@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-smb2",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Transfer files via Samba (SMB2) with n8n",
   "keywords": [
     "n8n-community-node-package",
@@ -52,19 +52,19 @@
     ]
   },
   "devDependencies": {
+    "@types/node": "^18.10.0",
     "@typescript-eslint/parser": "^7.15.0",
     "eslint": "^8.56.0",
     "eslint-plugin-n8n-nodes-base": "^1.16.1",
     "gulp": "^4.0.2",
     "prettier": "^3.3.2",
-    "typescript": "^5.5.3",
-    "@types/node": "^18.10.0"
+    "typescript": "^5.5.3"
   },
   "peerDependencies": {
     "n8n-workflow": "*"
   },
   "dependencies": {
-    "node-smb2": "^1.3.2",
+    "node-smb2": "^1.3.5",
     "tmp-promise": "^3.0.3"
   }
 }
