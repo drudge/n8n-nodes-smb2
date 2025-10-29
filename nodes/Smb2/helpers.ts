@@ -77,13 +77,20 @@ export async function connectToSmbServer(this: IExecuteFunctions | ITriggerFunct
 		let session: any;
 		let tree: any;
 
-		debug('Connecting to %s on %s as (%s\\%s) [connectTimeout: %s, requestTimeout: %s]', credentials.share, credentials.host, credentials.domain, credentials.username, credentials.connectTimeout, credentials.requestTimeout);
+		debug('Connecting to %s on %s as (%s\\%s) [connectTimeout: %s, requestTimeout: %s, ntlmVersion: %s]', credentials.share, credentials.host, credentials.domain, credentials.username, credentials.connectTimeout, credentials.requestTimeout, credentials.ntlmVersion || 'auto');
 		debug('smb://%s:%s@%s/%s', credentials.username, credentials.password, credentials.host, credentials.share);
+
+		// Determine the forceNtlmVersion option based on the user's selection
+		// 'auto' or undefined means let the library auto-negotiate
+		const forceNtlmVersion = credentials.ntlmVersion && credentials.ntlmVersion !== 'auto'
+			? credentials.ntlmVersion
+			: undefined;
 
 		session = await client.authenticate({
 			domain: credentials.domain,
 			username: credentials.username,
 			password: credentials.password,
+			forceNtlmVersion: forceNtlmVersion,
 		});
 
 		tree = await session.connectTree(credentials.share);

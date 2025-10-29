@@ -7,4 +7,5 @@ interface Smb2Credentials {
 	share: string;
 	connectTimeout: number;
 	requestTimeout: number;
+	ntlmVersion?: 'auto' | 'v1' | 'v2';
 }
