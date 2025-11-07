@@ -1,5 +1,5 @@
 {
-  "name": "n8n-nodes-smb2",
+  "name": "@everbright/n8n-nodes-smb2",
   "version": "0.2.1",
   "description": "Transfer files via Samba (SMB2) with n8n",
   "keywords": [
