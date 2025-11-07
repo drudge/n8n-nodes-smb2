@@ -8,12 +8,12 @@ importers:
 
   .:
     dependencies:
-      '@awo00/smb2':
-        specifier: ^1.1.0
-        version: 1.1.0
       n8n-workflow:
         specifier: '*'
         version: 1.48.0
+      node-smb2:
+        specifier: ^1.3.5
+        version: 1.3.5
       tmp-promise:
         specifier: ^3.0.3
         version: 3.0.3
@@ -41,10 +41,6 @@ importers:
         version: 5.5.3
 
 packages:
-
-  '@awo00/smb2@1.1.0':
-    resolution: {integrity: sha512-s0asM64KuKfcjM4srowZVtBIzOEX3d5jImVyEmgp4prQ9UPPbjz5Rnj2Ey/ANNoS8oKtgARBwEeJVw2KK27vUg==}
-    engines: {node: '>=18'}
 
   '@eslint-community/eslint-utils@4.4.0':
     resolution: {integrity: sha512-1/sA4dwrzBAyeUoQ6oxahHKmrZvsnLCg4RfxW3ZFGGmQkSNQPFNLV9CUEFQP1x9EYXHTo5p6xdhZM1Ne9p/AfA==}
@@ -1345,6 +1341,10 @@ packages:
   no-case@3.0.4:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
 
+  node-smb2@1.3.5:
+    resolution: {integrity: sha512-5Cji2T9sdj6VA0G/cw9yEDWdEMEiZudcWaj6ghivhzhQi0jVKuEO14+EoNlmA57zxEAQLgUxXTvYK/RwANIy3w==}
+    engines: {node: '>=18'}
+
   normalize-package-data@2.5.0:
     resolution: {integrity: sha512-/5CMN3T0R4XTj4DcGaexo+roZSdSFW/0AOOTROrjxzCG1wrWXEsGbRKevjlIL+ZDE4sZlJr5ED4YW0yqmkK+eA==}
 
@@ -2050,12 +2050,6 @@ packages:
     engines: {node: '>=10'}
 
 snapshots:
-
-  '@awo00/smb2@1.1.0':
-    dependencies:
-      des.js: 1.1.0
-      js-md4: 0.3.2
-      moment-timezone: 0.5.47
 
   '@eslint-community/eslint-utils@4.4.0(eslint@8.57.0)':
     dependencies:
@@ -3588,6 +3582,12 @@ snapshots:
     dependencies:
       lower-case: 2.0.2
       tslib: 2.6.3
+
+  node-smb2@1.3.5:
+    dependencies:
+      des.js: 1.1.0
+      js-md4: 0.3.2
+      moment-timezone: 0.5.47
 
   normalize-package-data@2.5.0:
     dependencies:

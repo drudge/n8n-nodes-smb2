@@ -1,4 +1,4 @@
-import { Client } from '@awo00/smb2';
+import { Client } from 'node-smb2';
 import {
 	type INodeType,
 	type INodeTypeDescription,

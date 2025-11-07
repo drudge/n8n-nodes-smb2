@@ -7,8 +7,8 @@ import {
 } from 'n8n-workflow';
 import { basename, join } from 'path';
 import * as fs from 'fs';
-import { file as tmpFile } from 'tmp-promise';
-import DirectoryEntry from '@awo00/smb2/dist/protocol/models/DirectoryEntry';
+import { type FileResult, file as tmpFile } from 'tmp-promise';
+import type DirectoryEntry from 'node-smb2/dist/protocol/models/DirectoryEntry';
 import { pipeline } from 'stream';
 import { promisify, debuglog } from 'util';
 import { connectToSmbServer, getReadableError } from './helpers';
@@ -333,6 +333,7 @@ export class Smb2 implements INodeType {
 
 		let client;
 		let tree;
+		let binaryFile: FileResult | null = null;
 
 		try {
 			({ client, tree } = await connectToSmbServer.call(this));
@@ -346,7 +347,6 @@ export class Smb2 implements INodeType {
 						returnItems.push({ json: formatEntry(entry, path) });
 					}
 				} else if (operation === 'download') {
-					let binaryFile;
 					const path = this.getNodeParameter('path', i) as string;
 
 					try {
@@ -412,11 +412,11 @@ export class Smb2 implements INodeType {
 								const binaryDataBuffer = await this.helpers.getBinaryDataBuffer(i, dataPropertyNameUpload);
 								if (!binaryDataBuffer) {
 									if (this.continueOnFail()) {
-										items[i].json.error = 'Binary data not found for key ' + dataPropertyNameUpload;
+										items[i].json.error = `Binary data not found for key ${dataPropertyNameUpload}`;
 										returnItems.push(items[i]);
 										continue;
 									}
-									throw new NodeOperationError(this.getNode(), 'Binary data not found for key ' + dataPropertyNameUpload);
+									throw new NodeOperationError(this.getNode(), `Binary data not found for key ${dataPropertyNameUpload}`);
 								}
 								content = binaryDataBuffer;
 							} else {

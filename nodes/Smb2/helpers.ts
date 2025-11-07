@@ -1,8 +1,8 @@
-import { Client } from "@awo00/smb2";
-import Session from "@awo00/smb2/dist/client/Session";
-import File from "@awo00/smb2/dist/client/File";
-import Tree from "@awo00/smb2/dist/client/Tree";
-import FilePipePrinterAccess_1 from "@awo00/smb2/dist/protocol/smb2/FilePipePrinterAccess";
+import { Client } from "node-smb2";
+import Session from "node-smb2/dist/client/Session";
+import File from "node-smb2/dist/client/File";
+import Tree from "node-smb2/dist/client/Tree";
+import FilePipePrinterAccess_1 from "node-smb2/dist/protocol/smb2/FilePipePrinterAccess";
 import { IExecuteFunctions, ITriggerFunctions, NodeApiError } from "n8n-workflow";
 import { debuglog } from 'util';
 
