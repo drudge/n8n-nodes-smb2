@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-smb2",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Transfer files via Samba (SMB2) with n8n",
   "keywords": [
     "n8n-community-node-package",
@@ -16,12 +16,12 @@
   "license": "MIT",
   "homepage": "https://github.com/drudge/n8n-nodes-smb2",
   "author": {
-    "name": "Nick Penree",
-    "email": "nick@penree.com"
+    "name": "MJ Sklorz",
+    "email": "martinjsklorz@gmail.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/drudge/n8n-nodes-smb2.git"
+    "url": "https://github.com/martinjsklorz/n8n-nodes-smb2.git"
   },
   "engines": {
     "node": ">=18.10",

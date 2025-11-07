@@ -205,7 +205,7 @@ export class Smb2Trigger implements INodeType {
 		let client: Client;
 		let tree;
 		let closeFunction;
-		let path;
+		let path: any;
 
 		try {
 			({ client, tree } = await connectToSmbServer.call(this));
@@ -231,7 +231,7 @@ export class Smb2Trigger implements INodeType {
                             debug('Action: %s | %s | Looking for: %s', action, actionName, event);
                             
                             // Map SMB2 actions to node events
-                            const eventMap = {
+                            const eventMap:any = {
                                 1: "created",      // Added
                                 2: "deleted",      // Removed
                                 3: "updated",      // Modified
