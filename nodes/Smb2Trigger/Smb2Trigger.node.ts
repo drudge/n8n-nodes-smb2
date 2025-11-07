@@ -100,11 +100,11 @@ export class Smb2Trigger implements INodeType {
 					},
 				},
 				required: true,
-				default: 'fileUpdated',
+				default: 'updated',
 				options: [
 					{
 						name: 'File Updated',
-						value: 'fileUpdated',
+						value: 'updated',
 					},
 				],
 				description: 'When to trigger this node',
@@ -139,42 +139,22 @@ export class Smb2Trigger implements INodeType {
 					},
 				},
 				required: true,
-				default: 'fileCreated',
+				default: 'created',
 				options: [
 					{
 						name: 'File Created',
-						value: 'fileCreated',
+						value: 'created',
 						description: 'When a file is created in the watched folder',
 					},
 					{
 						name: 'File Deleted',
-						value: 'fileDeleted',
+						value: 'deleted',
 						description: 'When a file is deleted in the watched folder',
 					},
 					{
 						name: 'File Updated',
-						value: 'fileUpdated',
+						value: 'updated',
 						description: 'When a file is updated in the watched folder',
-					},
-					{
-						name: 'Folder Created',
-						value: 'folderCreated',
-						description: 'When a folder is created in the watched folder',
-					},
-					{
-						name: 'Folder Deleted',
-						value: 'folderDeleted',
-						description: 'When a folder is deleted in the watched folder',
-					},
-					{
-						name: 'Folder Updated',
-						value: 'folderUpdated',
-						description: 'When a folder is updated in the watched folder',
-					},
-					{
-						name: 'Watch Folder Updated',
-						value: 'watchFolderUpdated',
-						description: 'When the watched folder itself is modified',
 					},
 				],
 			},
@@ -185,9 +165,6 @@ export class Smb2Trigger implements INodeType {
 				displayOptions: {
 					show: {
 						triggerOn: ['specificFolder'],
-					},
-					hide: {
-						event: ['watchFolderUpdated'],
 					},
 				},
 				default: '',
@@ -202,27 +179,17 @@ export class Smb2Trigger implements INodeType {
 					},
 				},
 				required: true,
-				default: 'fileCreated',
+				default: 'created',
 				options: [
 					{
 						name: 'File Created',
-						value: 'fileCreated',
+						value: 'created',
 						description: 'When a file is created in the watched drive',
 					},
 					{
 						name: 'File Updated',
-						value: 'fileUpdated',
+						value: 'updated',
 						description: 'When a file is updated in the watched drive',
-					},
-					{
-						name: 'Folder Created',
-						value: 'folderCreated',
-						description: 'When a folder is created in the watched drive',
-					},
-					{
-						name: 'Folder Updated',
-						value: 'folderUpdated',
-						description: 'When a folder is updated in the watched drive',
 					},
 				],
 				description: 'When to trigger this node',
@@ -253,21 +220,34 @@ export class Smb2Trigger implements INodeType {
 				path,
 				(response) => {
 					debug('Response: %s', JSON.stringify(response.body));
-					const changeType = response.body.changeType;
 
-					// Map SMB2 change types to user-selected options
-					const eventMap: Record<number, string> = {
-						0x01: "fileCreated",
-						0x02: "fileDeleted",
-						0x03: "fileUpdated",
-						0x04: "folderCreated",
-						0x05: "folderDeleted",
-						0x06: "folderUpdated"
-					};
-					debug('Change type: %s | %s | %s', changeType, eventMap[changeType], event);
-					if (eventMap[changeType] === event) {
-						this.emit([this.helpers.returnJsonArray(response.body)]);
-					}
+                    // Process each change in the data array
+                    if (response.data && Array.isArray(response.data)) {
+                        response.data.forEach(change => {
+                            const action = change.action;
+                            const actionName = change.actionName;
+                            const filename = change.filename;
+                            
+                            debug('Action: %s | %s | Looking for: %s', action, actionName, event);
+                            
+                            // Map SMB2 actions to node events
+                            const eventMap = {
+                                1: "created",      // Added
+                                2: "deleted",      // Removed
+                                3: "updated",      // Modified
+                            };
+                            
+                            if (eventMap[action] === event) {
+                                this.emit([this.helpers.returnJsonArray({
+                                    event: eventMap[action],
+                                    action: actionName,
+                                    filename: filename,
+                                    path: path,
+                                    ...change
+                                })]);
+                            }
+                        });
+                    }
 				},
 				recursive
 			);
