@@ -238,7 +238,7 @@ export class Smb2Trigger implements INodeType {
 		let client: Client;
 		let tree;
 		let closeFunction;
-		let path;
+		let path: string;
 
 		try {
 			({ client, tree } = await connectToSmbServer.call(this));
@@ -251,22 +251,44 @@ export class Smb2Trigger implements INodeType {
 
 			const stopFunction = await tree.watchDirectory(
 				path,
-				(response) => {
-					debug('Response: %s', JSON.stringify(response.body));
-					const changeType = response.body.changeType;
+				(response: any) => {
+					debug('Response: %s', JSON.stringify(response));
 
-					// Map SMB2 change types to user-selected options
-					const eventMap: Record<number, string> = {
-						0x01: "fileCreated",
-						0x02: "fileDeleted",
-						0x03: "fileUpdated",
-						0x04: "folderCreated",
-						0x05: "folderDeleted",
-						0x06: "folderUpdated"
+					// node-smb2 parses the response buffer into response.data array
+					// Each entry has: { action: number, actionName: string, filename: string }
+					if (!response.data || !Array.isArray(response.data)) {
+						debug('No change data in response');
+						return;
+					}
+
+					// Map FileAction enum values to our event names
+					// Note: SMB2 change notifications don't reliably distinguish between files and folders,
+					// so we map both file and folder events to the same underlying FileAction values:
+					// 1 = Added (FileAction.Added)
+					// 2 = Removed (FileAction.Removed)
+					// 3 = Modified (FileAction.Modified)
+					// 9 = RemovedByDelete (FileAction.RemovedByDelete)
+					const eventMap: Record<number, string[]> = {
+						1: ['fileCreated', 'folderCreated'],
+						2: ['fileDeleted', 'folderDeleted'],
+						3: ['fileUpdated', 'folderUpdated', 'watchFolderUpdated'],
+						9: ['fileDeleted', 'folderDeleted'],
 					};
-					debug('Change type: %s | %s | %s', changeType, eventMap[changeType], event);
-					if (eventMap[changeType] === event) {
-						this.emit([this.helpers.returnJsonArray(response.body)]);
+
+					// Process each change entry
+					for (const change of response.data) {
+						debug('Change: action=%s, actionName=%s, filename=%s', change.action, change.actionName, change.filename);
+
+						const mappedEvents = eventMap[change.action];
+						if (mappedEvents && mappedEvents.includes(event)) {
+							this.emit([this.helpers.returnJsonArray({
+								event,
+								action: change.action,
+								actionName: change.actionName,
+								filename: change.filename,
+								path,
+							})]);
+						}
 					}
 				},
 				recursive
