@@ -1,4 +1,5 @@
 import { Client } from 'node-smb2';
+import Tree from 'node-smb2/dist/client/Tree';
 import {
 	type INodeType,
 	type INodeTypeDescription,
@@ -236,7 +237,7 @@ export class Smb2Trigger implements INodeType {
 		const recursive = this.getNodeParameter('recursive') as boolean;
 
 		let client: Client;
-		let tree;
+		let tree: Tree;
 		let closeFunction;
 		let path: string;
 
@@ -251,7 +252,7 @@ export class Smb2Trigger implements INodeType {
 
 			const stopFunction = await tree.watchDirectory(
 				path,
-				(response: any) => {
+				async (response: any) => {
 					debug('Response: %s', JSON.stringify(response));
 
 					// node-smb2 parses the response buffer into response.data array
@@ -261,32 +262,82 @@ export class Smb2Trigger implements INodeType {
 						return;
 					}
 
-					// Map FileAction enum values to our event names
-					// Note: SMB2 change notifications don't reliably distinguish between files and folders,
-					// so we map both file and folder events to the same underlying FileAction values:
+					// Map FileAction enum values to base event types
 					// 1 = Added (FileAction.Added)
 					// 2 = Removed (FileAction.Removed)
 					// 3 = Modified (FileAction.Modified)
 					// 9 = RemovedByDelete (FileAction.RemovedByDelete)
-					const eventMap: Record<number, string[]> = {
-						1: ['fileCreated', 'folderCreated'],
-						2: ['fileDeleted', 'folderDeleted'],
-						3: ['fileUpdated', 'folderUpdated', 'watchFolderUpdated'],
-						9: ['fileDeleted', 'folderDeleted'],
+					const actionToEventType: Record<number, 'created' | 'deleted' | 'updated'> = {
+						1: 'created',
+						2: 'deleted',
+						3: 'updated',
+						9: 'deleted',
 					};
 
 					// Process each change entry
 					for (const change of response.data) {
 						debug('Change: action=%s, actionName=%s, filename=%s', change.action, change.actionName, change.filename);
 
-						const mappedEvents = eventMap[change.action];
-						if (mappedEvents && mappedEvents.includes(event)) {
+						const eventType = actionToEventType[change.action];
+						if (!eventType) {
+							debug('Unknown action type: %s', change.action);
+							continue;
+						}
+
+						// Determine if the changed item is a file or folder
+						// For delete events, we can't check (item is gone), so we emit for both file and folder delete events
+						let isDirectory = false;
+						let couldNotDetermine = false;
+
+						if (eventType === 'deleted') {
+							// Can't determine type for deleted items, will match both file and folder delete events
+							couldNotDetermine = true;
+						} else {
+							// For create/update events, check the directory listing to determine type
+							try {
+								const entries = await tree.readDirectory(path);
+								const entry = entries.find((e: any) => e.filename === change.filename);
+								if (entry && typeof entry.fileAttributes === 'number') {
+									// FileAttribute.Directory = 16 (0x10)
+									isDirectory = !!(entry.fileAttributes & 16);
+									debug('Entry %s is %s (attributes: %s)', change.filename, isDirectory ? 'directory' : 'file', entry.fileAttributes);
+								} else {
+									debug('Could not find entry %s in directory listing', change.filename);
+									couldNotDetermine = true;
+								}
+							} catch (error) {
+								debug('Error reading directory to determine type: %s', error);
+								couldNotDetermine = true;
+							}
+						}
+
+						// Match the event to what the user selected
+						let shouldEmit = false;
+
+						if (couldNotDetermine && eventType === 'deleted') {
+							// For deletions, we can't determine type, so emit if user selected any delete event
+							shouldEmit = ['fileDeleted', 'folderDeleted'].includes(event);
+						} else if (couldNotDetermine) {
+							// For other events where we couldn't determine, emit for both file and folder events
+							shouldEmit = [
+								`file${eventType.charAt(0).toUpperCase()}${eventType.slice(1)}`,
+								`folder${eventType.charAt(0).toUpperCase()}${eventType.slice(1)}`,
+							].includes(event);
+						} else {
+							// We know the type, so only emit if it matches what the user selected
+							const prefix = isDirectory ? 'folder' : 'file';
+							const expectedEvent = `${prefix}${eventType.charAt(0).toUpperCase()}${eventType.slice(1)}`;
+							shouldEmit = (event === expectedEvent) || (event === 'watchFolderUpdated' && eventType === 'updated');
+						}
+
+						if (shouldEmit) {
 							this.emit([this.helpers.returnJsonArray({
 								event,
 								action: change.action,
 								actionName: change.actionName,
 								filename: change.filename,
 								path,
+								isDirectory,
 							})]);
 						}
 					}
